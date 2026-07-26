@@ -3,6 +3,7 @@ name = "flashtrans-next"
 version = "2.1.0"
 description = "FlashTrans — 极速划词翻译"
 authors = ["chai1220"]
+license = "MIT"
 edition = "2021"
 
 [lib]

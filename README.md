@@ -1,5 +1,7 @@
 # FlashTrans 2
 
+FlashTrans is released under the [MIT License](LICENSE).
+
 FlashTrans 2 是 Windows 在线翻译与 OCR 工作台，使用 Tauri 2、Rust 与 Vanilla TypeScript/Vite 构建。
 
 本项目仅使用用户自行配置的 OpenAI 兼容 API。仓库和发布包均不需要 Python、GGUF、NLLB、Opus-MT、CTranslate2、CMake 或 libclang。

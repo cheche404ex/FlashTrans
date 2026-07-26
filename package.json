@@ -2,6 +2,7 @@
   "name": "flashtrans-next",
   "private": true,
   "version": "2.1.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
