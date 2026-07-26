@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlashTrans</title>
+    <link rel="stylesheet" href="/src/theme.css" />
+    <link rel="stylesheet" href="/src/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="titlebar" data-tauri-drag-region>
+        <div class="tb-app"><span class="tb-logo">译</span><span>FlashTrans</span></div>
+        <div class="tb-right">
+          <button class="mode-pill" id="selection-toggle" title="切换划词翻译 (F1)">
+            <span class="mode-dot"></span><span id="selection-label">划词已关闭</span>
+          </button>
+          <span class="badge blue" id="backend-badge">未配置 API</span>
+          <button class="iconbtn" id="btn-chat" title="AI 对话 (F4)" aria-label="AI 对话"></button>
+          <button class="iconbtn" id="btn-settings" title="设置" aria-label="设置" aria-haspopup="dialog" aria-expanded="false"></button>
+          <div class="winctl">
+            <button class="iconbtn" id="tb-min" title="最小化" aria-label="最小化"></button>
+            <button class="iconbtn" id="tb-max" title="缩放" aria-label="最大化或还原"></button>
+            <button class="iconbtn wc-close" id="tb-close" title="隐藏到托盘" aria-label="隐藏到托盘"></button>
+          </div>
+        </div>
+      </header>
+
+      <div class="workspace-head">
+        <div class="langbar">
+          <div id="dd-src"></div>
+          <button class="swap" id="btn-swap" title="交换语言"></button>
+          <div id="dd-tgt"></div>
+        </div>
+        <div class="workspace-meta">
+          <span id="request-state">就绪</span>
+        </div>
+      </div>
+
+      <main class="panes">
+        <section class="pane src" id="pane-src">
+          <div class="pane-label">原文</div>
+          <textarea id="src-text" placeholder="输入或粘贴文本…&#10;&#10;Ctrl + Enter 翻译" spellcheck="false"></textarea>
+          <div class="tools">
+            <button class="iconbtn" id="src-copy" title="复制原文" aria-label="复制原文"></button>
+            <button class="iconbtn" id="src-clear" title="清空" aria-label="清空原文"></button>
+            <span class="count" id="src-count"></span>
+          </div>
+        </section>
+        <section class="pane dst">
+          <div class="pane-label">译文</div>
+          <div class="dst-scroll">
+            <div id="dst-text" class="dst-content"></div>
+            <div id="dst-skeleton" class="skeleton" style="display:none"><i></i><i></i><i></i></div>
+            <div id="dst-empty" class="dst-empty">译文将在这里出现</div>
+          </div>
+          <div class="tools"><button class="iconbtn" id="dst-copy" title="复制译文" aria-label="复制译文"></button></div>
+        </section>
+      </main>
+
+      <footer class="actionbar">
+        <span class="hint">F1 划词开关 · F2 打字翻译 · F3 截图翻译 · F4 对话 · F5 主窗口</span>
+        <div class="qs" id="qs-box"></div>
+        <button class="btn primary cta" id="btn-translate">翻译 <kbd>Ctrl ↵</kbd></button>
+      </footer>
+    </div>
+
+    <div class="sheet-mask" id="sheet-mask" aria-hidden="true"></div>
+    <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sheet-title">
+      <div class="sheet-head">
+        <div><span class="sheet-title" id="sheet-title">设置</span><span class="sheet-subtitle">在线 API 与工作流</span></div>
+        <button class="iconbtn" id="sheet-close" title="关闭" aria-label="关闭设置"></button>
+      </div>
+      <div class="sheet-body">
+        <div class="sec-label">翻译 API</div>
+        <div class="settings-block">
+          <div id="profile-list" class="model-list"></div>
+          <button class="btn small full" id="profile-add">＋ 新建 API 预设</button>
+        </div>
+        <div class="settings-block form-grid">
+          <label class="f-label" for="api-name">预设名称</label>
+          <input class="f-input" id="api-name" placeholder="例如 OpenAI" spellcheck="false" />
+          <label class="f-label" for="api-base">Base URL</label>
+          <input class="f-input" id="api-base" placeholder="https://api.openai.com/v1" spellcheck="false" />
+          <label class="f-label" for="api-model">Model</label>
+          <input class="f-input" id="api-model" placeholder="gpt-4.1-mini" spellcheck="false" />
+          <label class="f-label" for="api-key">API Key</label>
+          <input class="f-input" id="api-key" type="password" placeholder="sk-…" spellcheck="false" />
+          <label class="toggle-row" for="api-vision">
+            <span>模型支持视觉<small>仅手动声明，不会自动探测或产生费用</small></span>
+            <input id="api-vision" type="checkbox" />
+          </label>
+          <div class="row-end"><button class="btn" id="api-test">测试连接</button><button class="btn tint" id="api-save">保存</button></div>
+        </div>
+
+        <div class="sec-label">OCR</div>
+        <div class="settings-block row-between" id="ocr-box">
+          <span>截图文字识别<small class="sub" id="ocr-hint">使用 Windows 系统 OCR</small></span>
+          <div class="seg" id="seg-ocr"><button data-v="windows">Windows OCR</button><button data-v="vision">模型视觉</button></div>
+        </div>
+        <div class="notice" id="vision-notice">模型视觉使用当前 API 预设。视觉失败会直接显示错误，不会自动回退。</div>
+
+        <div class="sec-label">领域提示词</div>
+        <div class="settings-block">
+          <div id="prompt-list" class="model-list"></div>
+          <button class="btn small full" id="prompt-add">＋ 新建提示词</button>
+          <div class="hk-note">附加领域、术语和语气要求；划词、打字、截图和主窗口翻译均生效。</div>
+        </div>
+
+        <div class="sec-label">悬浮窗</div>
+        <div class="settings-block row-between">
+          <span>停留时间<small class="sub">悬停时暂停倒计时</small></span>
+          <div class="seg" id="seg-stay"><button data-v="5">5s</button><button data-v="8">8s</button><button data-v="15">15s</button><button data-v="30">30s</button><button data-v="0">常驻</button></div>
+        </div>
+        <div class="settings-block row-between">
+          <span>点击外部关闭</span>
+          <div class="seg" id="seg-clickout"><button data-v="1">开</button><button data-v="0">关</button></div>
+        </div>
+
+        <div class="sec-label">全局快捷键</div>
+        <div class="settings-block hotkey-list" id="hotkey-list">
+          <div class="hk-row"><span>划词开关</span><button class="hk-btn" data-hk="f1"></button></div>
+          <div class="hk-row"><span>打字翻译</span><button class="hk-btn" data-hk="f2"></button></div>
+          <div class="hk-row"><span>截图翻译</span><button class="hk-btn" data-hk="f3"></button></div>
+          <div class="hk-row"><span>在线对话</span><button class="hk-btn" data-hk="f4"></button></div>
+          <div class="hk-row"><span>显示主窗口</span><button class="hk-btn" data-hk="f5"></button></div>
+          <div class="hk-note">点击按键值后录制新组合键，Esc 取消。</div>
+          <div class="row-end"><button class="btn small" id="hk-reset">恢复默认</button></div>
+        </div>
+
+        <div class="sec-label">外观</div>
+        <div class="settings-block row-between"><span>主题</span><div class="seg" id="seg-theme"><button data-v="dark">深色</button><button data-v="light">浅色</button></div></div>
+        <div class="settings-block row-between"><span>界面缩放</span><div class="seg" id="seg-scale"><button data-v="0.9">小</button><button data-v="1">标准</button><button data-v="1.15">大</button><button data-v="1.3">特大</button></div></div>
+
+        <div class="sec-label">关于</div>
+        <div class="settings-block about"><strong>FlashTrans 2.1</strong><span>Windows 在线翻译与 OCR 工作台</span></div>
+      </div>
+    </aside>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
