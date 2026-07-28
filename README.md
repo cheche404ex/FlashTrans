@@ -28,10 +28,8 @@ FlashTrans 2 是 Windows 在线翻译与 OCR 工作台，使用 Tauri 2、Rust �
 
 ## 隐私与网络
 
-- 设置和 API Key 保存在 `%APPDATA%\com.chai1220.flashtrans\settings.json`，不会由应用上传到其他服务。
 - 翻译和对话请求会把用户输入发送到当前配置的 API Base URL。
 - 模型视觉 OCR 会把所选截图发送到当前配置的 API Base URL。
 - Windows OCR 不上传截图，但后续翻译会发送 OCR 识别出的文字。
-- 应用无遥测、无使用统计、无自动模型下载；除用户发起的 API 请求外，不主动联网。
 
 实际隐私与数据保留策略还取决于用户选择的 API 服务商，请同时查阅该服务商条款。
